@@ -21,8 +21,18 @@ exports.listen = function(server) {
   });
 };
 
+function handleMessageBroadcasting(socket) {
+  socket.on('message', function (message) {
+    console.log('message is ' + message)
+    socket.broadcast.to(message.room).emit('message', {
+      text: nickNames[socket.id] + ': ' + message.text
+    });
+  });
+}
+
 function assignGuestName(socket, guestNumber, nickNames, namesUsed) {
   var name = 'Guest' + guestNumber;
+  console.log("socket.id is " + socket.id );
   nickNames[socket.id] = name;
   socket.emit('nameResult', {
     success: true,
@@ -30,6 +40,14 @@ function assignGuestName(socket, guestNumber, nickNames, namesUsed) {
   });
   namesUsed.push(name);
   return guestNumber + 1;
+}
+
+function handleRoomJoining(socket) {
+  socket.on('join', function(room) {
+    console.log('room is ' + room.newRoom);
+    socket.leave(currentRoom[socket.id]);
+    joinRoom(socket, room.newRoom);
+  });
 }
 
 function joinRoom(socket, room) {
@@ -85,21 +103,6 @@ function handleNameChangeAttempts(socket, nickNames, namesUsed) {
         });
       }
     }
-  });
-}
-
-function handleMessageBroadcasting(socket) {
-  socket.on('message', function (message) {
-    socket.broadcast.to(message.room).emit('message', {
-      text: nickNames[socket.id] + ': ' + message.text
-    });
-  });
-}
-
-function handleRoomJoining(socket) {
-  socket.on('join', function(room) {
-    socket.leave(currentRoom[socket.id]);
-    joinRoom(socket, room.newRoom);
   });
 }
 

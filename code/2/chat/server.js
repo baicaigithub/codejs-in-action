@@ -5,21 +5,23 @@ var mime = require('mime');
 var cache = {};
 
 function send404(response) {
-  response.writeHead(404, {'Content-Type': 'text/plain'});
-  response.write('Error 404: resource not found.');
+  response.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
+  // charset sets the char set. Without any space around '='
+  response.write('Error 404: resource not found. NOT FOUND!就是找不到！');
   response.end();
 }
 
 function sendFile(response, filePath, fileContents) {
   response.writeHead(
     200, 
-    {"content-type": mime.lookup(path.basename(filePath))}
+    {"content-type": mime.lookup(path.basename(filePath)) + '; charset=utf-8'}
   );
   response.end(fileContents);
 }
 
 function serveStatic(response, cache, absPath) {
   if (cache[absPath]) {
+    console.log("Cache hit! " + absPath);
     sendFile(response, absPath, cache[absPath]);
   } else {
     fs.exists(absPath, function(exists) {
@@ -28,6 +30,7 @@ function serveStatic(response, cache, absPath) {
           if (err) {
             send404(response);
           } else {
+            console.log("Reading file into cache" + absPath);
             cache[absPath] = data;
             sendFile(response, absPath, data);
           }
@@ -41,6 +44,8 @@ function serveStatic(response, cache, absPath) {
 
 var server = http.createServer(function(request, response) {
   var filePath = false;
+  
+  console.log(request.url);
 
   if (request.url == '/') {
     filePath = 'public/index.html';
